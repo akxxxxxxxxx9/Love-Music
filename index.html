@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音乐播放器</title>
+    <title>我的歌单</title>
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #000;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
             color: #fff;
             display: flex;
             justify-content: center;
@@ -20,84 +20,144 @@
             width: 100%;
             max-width: 400px;
             text-align: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
+            background: rgba(30, 30, 40, 0.96);
+            padding: 28px 24px 24px 24px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(7px);
+            border: 1.5px solid rgba(255,255,255,0.08);
         }
         .album-art {
             width: 100%;
-            height: 300px;
-            background-image: url('http://momo-1-img.ao1160301aila.workers.dev/momobako.png'); /* 替换为实际图片 */
+            height: 280px;
+            background-image: url('http://momo-1-img.ao1160301aila.workers.dev/momobako.png');
             background-size: cover;
             background-position: center;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.35);
         }
         .song-info {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .song-title {
-            font-size: 1.5em;
+            font-size: 1.7em;
             margin: 0;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         .artist {
-            font-size: 1em;
-            color: #888;
+            font-size: 1.05em;
+            color: #b2b2b2;
+            margin-top: 4px;
         }
         .progress-container {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .progress {
             flex-grow: 1;
             -webkit-appearance: none;
-            height: 5px;
-            background: #444;
-            border-radius: 5px;
+            appearance: none;
+            height: 7px;
+            background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+            border-radius: 7px;
             outline: none;
+            box-shadow: 0 1px 6px 0 rgba(255, 94, 98, 0.15);
+            transition: background 0.2s;
         }
         .progress::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
+            appearance: none;
+            width: 18px;
+            height: 18px;
             background: #fff;
             border-radius: 50%;
+            box-shadow: 0 2px 8px 0 rgba(255, 94, 98, 0.18);
             cursor: pointer;
+            border: 2px solid #ff5e62;
+            transition: background 0.2s;
+        }
+        .progress::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px 0 rgba(255, 94, 98, 0.18);
+            cursor: pointer;
+            border: 2px solid #ff5e62;
+            transition: background 0.2s;
+        }
+        .progress::-ms-thumb {
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px 0 rgba(255, 94, 98, 0.18);
+            cursor: pointer;
+            border: 2px solid #ff5e62;
+            transition: background 0.2s;
+        }
+        .progress:focus {
+            outline: none;
+            background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
         }
         .time {
-            font-size: 0.9em;
-            margin: 0 10px;
-            color: #888;
+            font-size: 0.98em;
+            margin: 0 12px;
+            color: #ffb199;
+            min-width: 48px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
         }
         .controls {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 28px;
+            margin-bottom: 18px;
         }
         .controls button {
-            background: none;
+            background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
             border: none;
             color: #fff;
-            font-size: 1.5em;
+            font-size: 2.1em;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 12px 0 rgba(255,94,98,0.10);
             cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .controls button:hover {
+            transform: scale(1.12);
+            box-shadow: 0 4px 24px 0 rgba(255,94,98,0.18);
         }
         .interactions {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 18px;
+            margin-bottom: 18px;
         }
         .interactions button {
-            background: none;
+            background: rgba(255,255,255,0.07);
             border: none;
             color: #fff;
-            font-size: 1em;
+            font-size: 1.15em;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            border-radius: 8px;
+            padding: 7px 14px;
+            transition: background 0.18s, color 0.18s;
+        }
+        .interactions button:hover {
+            background: rgba(255,255,255,0.15);
+            color: #ffb199;
         }
         .song-list-modal {
             display: none;
@@ -106,17 +166,18 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.93);
             z-index: 10;
             overflow-y: auto;
         }
         .song-list {
-            margin: 40px 20px;
+            margin: 48px 22px;
             text-align: left;
         }
         .song-list h3 {
-            margin: 0 0 10px;
-            font-size: 1.2em;
+            margin: 0 0 13px;
+            font-size: 1.25em;
+            font-weight: 600;
         }
         .song-list ul {
             list-style: none;
@@ -124,16 +185,19 @@
             margin: 0;
         }
         .song-list li {
-            padding: 10px;
+            padding: 12px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.2s;
+            border-radius: 7px;
+            transition: background 0.2s, color 0.18s;
+            color: #fff;
         }
         .song-list li:hover {
-            background: #333;
+            background: #2d2d2d;
+            color: #ffb199;
         }
         .song-list li.active {
-            background: #555;
+            background: #ff5e62;
+            color: #fff;
         }
     </style>
 </head>
@@ -175,23 +239,28 @@
             {
                 title: "田中 - TANAKA",
                 artist: "合作演出：RISH",
+                albumArt: "http://momo-1-img.ao1160301aila.workers.dev/momobako.png",
+                src: "http://momo-1-img.ao1160301aila.workers.dev/田中-TANAKA.mp3"
+            },
+            {
+                title: "無語",
+                artist: "本兮",
+                albumArt: "http://momo-1-img.ao1160301aila.workers.dev/momobako.png", // 替换为实际图片
                 src: "https://cloudflare-imgbed-avh.pages.dev/file/1747364081565_本兮-無語(歌詞動態字幕)(480P)(mp3).mp3", // 替换为实际音频路径
-                albumArt: "https://via.placeholder.com/400x300", // 替换为实际图片
-                duration: 137 // 歌曲时长（秒）
+                
             },
             {
-                title: "歌曲2 - Song 2",
-                artist: "艺术家2 - Artist 2",
-                src: "path/to/song2.mp3",
-                albumArt: "https://via.placeholder.com/400x300",
-                duration: 180
+                title: "無語",
+                artist: "本兮",
+                albumArt: "http://momo-1-img.ao1160301aila.workers.dev/momobako.png",
+                src: "https://cloudflare-imgbed-avh.pages.dev/file/1747364081565_本兮-無語(歌詞動態字幕)(480P)(mp3).mp3"
+                
             },
             {
-                title: "歌曲3 - Song 3",
-                artist: "艺术家3 - Artist 3",
-                src: "path/to/song3.mp3",
-                albumArt: "https://via.placeholder.com/400x300",
-                duration: 210
+                title: "春日",
+                artist: "合作演出：RISH",
+                albumArt: "http://momo-1-img.ao1160301aila.workers.dev/momobako.png",
+                src: "http://momo-1-img.ao1160301aila.workers.dev/春日.mp3"
             }
         ];
         const audio = new Audio();
@@ -231,11 +300,15 @@
             songTitleEl.textContent = song.title;
             artistEl.textContent = song.artist;
             albumArtEl.style.backgroundImage = `url('${song.albumArt}')`;
-            progress.max = song.duration;
             progress.value = 0;
-            durationEl.textContent = formatTime(song.duration);
+            durationEl.textContent = '--:--';
             currentTimeEl.textContent = formatTime(0);
         }
+        // 自动获取音频时长
+        audio.addEventListener('loadedmetadata', () => {
+            progress.max = audio.duration;
+            durationEl.textContent = formatTime(audio.duration);
+        });
         // 播放歌曲
         function playSong(index) {
             currentSongIndex = index;
