@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐播放器</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .player-container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .album-art {
+            width: 100%;
+            height: 300px;
+            background-image: url('http://momo-1-img.ao1160301aila.workers.dev/momobako.png'); /* 替换为实际图片 */
+            background-size: cover;
+            background-position: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .song-info {
+            margin-bottom: 20px;
+        }
+        .song-title {
+            font-size: 1.5em;
+            margin: 0;
+        }
+        .artist {
+            font-size: 1em;
+            color: #888;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .progress {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            height: 5px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+        }
+        .progress::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .time {
+            font-size: 0.9em;
+            margin: 0 10px;
+            color: #888;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .interactions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .interactions button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .song-list-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            overflow-y: auto;
+        }
+        .song-list {
+            margin: 40px 20px;
+            text-align: left;
+        }
+        .song-list h3 {
+            margin: 0 0 10px;
+            font-size: 1.2em;
+        }
+        .song-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .song-list li {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .song-list li:hover {
+            background: #333;
+        }
+        .song-list li.active {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <div class="album-art" id="album-art"></div>
+        <div class="song-info">
+            <h1 class="song-title" id="song-title">田中 - TANAKA</h1>
+            <p class="artist" id="artist">合作演出：RISH</p>
+        </div>
+        <div class="interactions">
+            <button><span>👍</span> 0</button>
+            <button><span>💬</span> 0</button>
+            <button><span>📤</span> 0</button>
+            <button id="show-song-list"><span>≡</span></button>
+        </div>
+        <div class="progress-container">
+            <span class="time" id="current-time">0:00</span>
+            <input type="range" min="0" max="100" value="0" class="progress" id="progress">
+            <span class="time" id="duration">0:00</span>
+        </div>
+        <div class="controls">
+            <button id="shuffle">🔀</button>
+            <button id="prev">⏮️</button>
+            <button id="play-pause">▶️</button>
+            <button id="next">⏭️</button>
+            <button id="repeat">🔁</button>
+        </div>
+    </div>
+    <div class="song-list-modal" id="song-list-modal">
+        <div class="song-list">
+            <h3>歌曲列表</h3>
+            <ul id="song-list"></ul>
+        </div>
+    </div>
+    <script>
+        // 歌曲数据（示例）
+        const songs = [
+            {
+                title: "田中 - TANAKA",
+                artist: "合作演出：RISH",
+                src: "https://cloudflare-imgbed-avh.pages.dev/file/1747364081565_本兮-無語(歌詞動態字幕)(480P)(mp3).mp3", // 替换为实际音频路径
+                albumArt: "https://via.placeholder.com/400x300", // 替换为实际图片
+                duration: 137 // 歌曲时长（秒）
+            },
+            {
+                title: "歌曲2 - Song 2",
+                artist: "艺术家2 - Artist 2",
+                src: "path/to/song2.mp3",
+                albumArt: "https://via.placeholder.com/400x300",
+                duration: 180
+            },
+            {
+                title: "歌曲3 - Song 3",
+                artist: "艺术家3 - Artist 3",
+                src: "path/to/song3.mp3",
+                albumArt: "https://via.placeholder.com/400x300",
+                duration: 210
+            }
+        ];
+        const audio = new Audio();
+        const playPauseBtn = document.getElementById('play-pause');
+        const progress = document.getElementById('progress');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const songTitleEl = document.getElementById('song-title');
+        const artistEl = document.getElementById('artist');
+        const albumArtEl = document.getElementById('album-art');
+        const songListEl = document.getElementById('song-list');
+        const songListModal = document.getElementById('song-list-modal');
+        const showSongListBtn = document.getElementById('show-song-list');
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        // 初始化歌曲列表
+        function loadSongList() {
+            songListEl.innerHTML = '';
+            songs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${song.title} - ${song.artist}`;
+                li.dataset.index = index;
+                if (index === currentSongIndex) {
+                    li.classList.add('active');
+                }
+                li.addEventListener('click', () => {
+                    playSong(index);
+                    songListModal.style.display = 'none'; // 点击歌曲后收起列表
+                });
+                songListEl.appendChild(li);
+            });
+        }
+        // 加载歌曲
+        function loadSong(index) {
+            const song = songs[index];
+            audio.src = song.src;
+            songTitleEl.textContent = song.title;
+            artistEl.textContent = song.artist;
+            albumArtEl.style.backgroundImage = `url('${song.albumArt}')`;
+            progress.max = song.duration;
+            progress.value = 0;
+            durationEl.textContent = formatTime(song.duration);
+            currentTimeEl.textContent = formatTime(0);
+        }
+        // 播放歌曲
+        function playSong(index) {
+            currentSongIndex = index;
+            loadSong(currentSongIndex);
+            audio.play();
+            isPlaying = true;
+            playPauseBtn.textContent = '⏸️';
+            updateSongListActive();
+        }
+        // 更新歌曲列表的选中状态
+        function updateSongListActive() {
+            const listItems = songListEl.querySelectorAll('li');
+            listItems.forEach((item, index) => {
+                item.classList.toggle('active', index === currentSongIndex);
+            });
+        }
+        // 格式化时间（秒 -> 分:秒）
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        // 显示/隐藏歌曲列表
+        showSongListBtn.addEventListener('click', () => {
+            songListModal.style.display = songListModal.style.display === 'block' ? 'none' : 'block';
+        });
+        // 点击弹窗外部收起
+        songListModal.addEventListener('click', (e) => {
+            if (e.target === songListModal) {
+                songListModal.style.display = 'none';
+            }
+        });
+        // 播放/暂停
+        playPauseBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                playPauseBtn.textContent = '▶️';
+            } else {
+                audio.play();
+                playPauseBtn.textContent = '⏸️';
+            }
+            isPlaying = !isPlaying;
+        });
+        // 进度条更新
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            progress.value = currentTime;
+            currentTimeEl.textContent = formatTime(currentTime);
+        });
+        // 拖动进度条
+        progress.addEventListener('input', () => {
+            audio.currentTime = progress.value;
+        });
+        // 歌曲结束时自动播放下一首
+        audio.addEventListener('ended', () => {
+            playNext();
+        });
+        // 上一首
+        document.getElementById('prev').addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            playSong(currentSongIndex);
+        });
+        // 下一首
+        document.getElementById('next').addEventListener('click', () => playNext());
+        function playNext() {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            playSong(currentSongIndex);
+        }
+        // 随机播放
+        document.getElementById('shuffle').addEventListener('click', () => {
+            currentSongIndex = Math.floor(Math.random() * songs.length);
+            playSong(currentSongIndex);
+        });
+        // 循环播放（简单实现：单曲循环）
+        document.getElementById('repeat').addEventListener('click', () => {
+            audio.loop = !audio.loop;
+            document.getElementById('repeat').style.color = audio.loop ? '#888' : '#fff';
+        });
+        // 初始化
+        loadSongList();
+        loadSong(currentSongIndex);
+    </script>
+</body>
+</html>
